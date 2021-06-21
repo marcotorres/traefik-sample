@@ -64,7 +64,7 @@ Ejecutar los siguientes comandos:
     cp traefik/shared/.htpasswd.example traefik/shared/.htpasswd
     chmod 0600 traefik/acme.json
 
-Nota: Recuerde usar el modo beta de letsencrypt para la generación de certificados SSL y el contenido de acme.json al 
+Nota: Recuerde usar el modo beta de letsencrypt para la generación de certificados SSL y el contenido de acme.json
 al inico debe de ser {}
 
 ## Contribuyendo al proyecto
