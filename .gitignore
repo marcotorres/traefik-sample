@@ -1,0 +1,8 @@
+.env
+.idea
+.idea/**
+.DS_Store
+traefik/shared/.htpasswd
+traefik/acme.json
+traefik/traefik.log
+Makefile

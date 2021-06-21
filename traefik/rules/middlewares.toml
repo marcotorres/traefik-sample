@@ -1,0 +1,9 @@
+[http.middlewares]
+    [http.middlewares.myauth]
+        [http.middlewares.myauth.basicAuth]
+            realm = "Traefik Basic Auth"
+            usersFile = "/shared/.htpasswd"
+    [http.middlewares.rate-limit]
+        [http.middlewares.rate-limit.rateLimit]
+            average = 100
+            burst = 50

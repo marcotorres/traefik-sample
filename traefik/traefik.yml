@@ -1,0 +1,66 @@
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: true
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: ":443"
+  traefik:
+    address: ":8080"
+
+api:
+  dashboard: true
+  insecure: false
+  debug: true
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: traefik
+    swarmMode: false
+  file:
+    directory: /rules
+    watch: true
+
+log:
+  filePath: "/traefik.log"
+  level: DEBUG # DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+  format: json
+
+accessLog:
+  filePath: "/traefik.log"
+  bufferingSize: 100
+  format: json
+  filters:
+    statusCodes:
+      - "400-499"
+    retryAttempts: true
+    minDuration: "10ms"
+  fields:
+    defaultMode: keep
+    names:
+      ClientUsername: drop
+    headers:
+      defaultMode: keep
+      names:
+        User-Agent: redact
+        Authorization: drop
+        Content-Type: keep
+
+certificatesResolvers:
+  le:
+    acme:
+      email: log@traefik-sample.com
+      storage: "/acme.json"
+      #caServer: https://acme-staging-v02.api.letsencrypt.org/directory # no comentar para pruebas indefinidas
+      httpChallenge:
+        entryPoint: web

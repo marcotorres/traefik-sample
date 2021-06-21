@@ -1,0 +1,173 @@
+version: "3.8"
+
+networks:
+  infra:
+  traefik:
+    external:
+      name: traefik
+  default:
+    driver: bridge
+
+volumes:
+  traefik_sample_data_portainer:
+  traefik_sample_data_mysql:
+
+services:
+
+  traefik:
+    image: traefik:v2.3
+    container_name: traefik
+    restart: unless-stopped
+    networks:
+      traefik:
+        ipv4_address: 192.168.90.254
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "80:80"
+      - "443:443"
+      - target: 8080
+        published: 8080
+        protocol: tcp
+        mode: ingress
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik/traefik.yml:/traefik.yml
+      - ./traefik/acme.json:/acme.json
+      - ./traefik/traefik.log:/traefik.log
+      - ./traefik/rules:/rules
+      - ./traefik/shared:/shared
+    labels:
+      - "traefik.enable=true"
+      # router
+      - "traefik.http.routers.traefik-rtr.entrypoints=websecure"
+      - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$HOSTNAME`)"
+      - "traefik.http.routers.traefik-rtr.tls=true"
+      - "traefik.http.routers.traefik-rtr.tls.certresolver=le"
+      # service api
+      - "traefik.http.routers.traefik-rtr.service=api@internal"
+      # middlewares
+      - "traefik.http.routers.traefik-rtr.middlewares=rate-limit@file,myauth@file"
+
+  api:
+    image: webdevops/php-nginx:7.2
+    container_name: api
+    working_dir: /app
+    restart: always
+    networks:
+      - traefik
+      - infra
+    volumes:
+      - ./apps/api/source:/app:rw
+      - ./nginx/nginxapi.conf:/etc/nginx/nginx.conf
+    environment:
+      - WEB_DOCUMENT_ROOT=/app/public
+      - VIRTUAL_HOST=api.$HOSTNAME
+    labels:
+      - "traefik.enable=true"
+      # router
+      - "traefik.http.routers.api-rtr.entrypoints=websecure"
+      - "traefik.http.routers.api-rtr.rule=Host(`api.$HOSTNAME`)"
+      - "traefik.http.routers.api-rtr.tls=true"
+      - "traefik.http.routers.api-rtr.tls.certresolver=le"
+
+  intranet:
+    image: webdevops/nginx:latest
+    container_name: intranet
+    working_dir: /app
+    restart: always
+    networks:
+      - traefik
+      - infra
+    volumes:
+      - ./apps/intranet:/app:rw
+      - ./nginx/nginxapi.conf:/etc/nginx/nginx.conf
+    environment:
+      - WEB_DOCUMENT_ROOT=/app/build
+      - WEB_ALIAS_DOMAIN=admin.$HOSTNAME
+      - WEB_DOCUMENT_INDEX=index.html
+    labels:
+      - "traefik.enable=true"
+      # router
+      - "traefik.http.routers.intranet-rtr.entrypoints=websecure"
+      - "traefik.http.routers.intranet-rtr.rule=Host(`intranet.$HOSTNAME`)"
+      - "traefik.http.routers.intranet-rtr.tls=true"
+      - "traefik.http.routers.intranet-rtr.tls.certresolver=le"
+
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    restart: always
+    networks:
+      - traefik
+      - infra
+    volumes:
+      - ./adminer/plugins-enabled:/var/www/html/plugins-enabled:rw
+      - ./adminer/robots.txt:/var/www/html/robots.txt
+    labels:
+      - "traefik.enable=true"
+      # router
+      - "traefik.http.routers.adminer-rtr.entrypoints=websecure"
+      - "traefik.http.routers.adminer-rtr.rule=Host(`adminer.$HOSTNAME`)"
+      - "traefik.http.routers.adminer-rtr.tls=true"
+      - "traefik.http.routers.adminer-rtr.tls.certresolver=le"
+      # middlewares
+      - "traefik.http.routers.adminer-rtr.middlewares=rate-limit@file,myauth@file"
+
+  mysql:
+    image: mysql:8.0.25
+    container_name: mysql
+    working_dir: /app
+    restart: on-failure
+    networks:
+      - infra
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "3306:3306"
+    volumes:
+      - ${PWD}/data:/app:rw
+      - ${PWD}/mysql/my.cnf:/etc/mysql/conf.d/my-over.cnf
+      - traefik_sample_data_mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+      MYSQL_DATABASE: $MYSQL_DATABASE
+      MYSQL_USER: $MYSQL_USER
+      MYSQL_PASSWORD: $MYSQL_PASSWORD
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    networks:
+      - infra
+    security_opt:
+      - no-new-privileges:true
+
+  portainer:
+    image: portainer/portainer:latest
+    container_name: portainer
+    restart: unless-stopped
+    command: -H unix:///var/run/docker.sock
+    networks:
+      traefik:
+        ipv4_address: 192.168.90.253
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - itraefik_sample_data_portainer:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=$TZ
+    labels:
+      - "traefik.enable=true"
+      # router
+      - "traefik.http.routers.portainer-rtr.entrypoints=websecure"
+      - "traefik.http.routers.portainer-rtr.rule=Host(`portainer.$HOSTNAME`)"
+      - "traefik.http.routers.portainer-rtr.tls=true"
+      - "traefik.http.routers.portainer-rtr.tls.certresolver=le"
+      # services
+      - "traefik.http.routers.portainer-rtr.service=portainer-svc"
+      - "traefik.http.services.portainer-svc.loadbalancer.server.port=9000"
