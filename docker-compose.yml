@@ -50,7 +50,7 @@ services:
       - "traefik.http.routers.traefik-rtr.middlewares=rate-limit@file,myauth@file"
 
   api:
-    image: webdevops/php-nginx:7.2
+    image: webdevops/php-nginx:8.1-alpine
     container_name: api
     working_dir: /app
     restart: always
@@ -58,7 +58,7 @@ services:
       - traefik
       - infra
     volumes:
-      - ./apps/api/source:/app:rw
+      - ./apps/api:/app:rw
       - ./nginx/nginxapi.conf:/etc/nginx/nginx.conf
     environment:
       - WEB_DOCUMENT_ROOT=/app/public
@@ -71,17 +71,16 @@ services:
       - "traefik.http.routers.api-rtr.tls=true"
       - "traefik.http.routers.api-rtr.tls.certresolver=le"
 
-  intranet:
+  web:
     image: webdevops/nginx:latest
-    container_name: intranet
+    container_name: web
     working_dir: /app
     restart: always
     networks:
       - traefik
       - infra
     volumes:
-      - ./apps/intranet:/app:rw
-      - ./nginx/nginxapi.conf:/etc/nginx/nginx.conf
+      - ./apps/web:/app:rw
     environment:
       - WEB_DOCUMENT_ROOT=/app/build
       - WEB_ALIAS_DOMAIN=admin.$HOSTNAME

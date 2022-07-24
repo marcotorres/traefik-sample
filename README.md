@@ -32,24 +32,6 @@ Los prefijos son de acuerdo al repositorio:
 - *api*:  **end_point_github_api** rama master
 - *intranet*:  **end_point_github_intranet**, rama master
 
-## Iniciando en el proyecto
-
-Para instalar el proyecto primero debes de ejecutar:
-
-```
-make setup
-```
-
-Luego cada proyecto se instalara en el directorio **apps**. Configura cada proyecto las variables y configuraciones.
-
-Una vez configurados ejecuta el siguiente comando:
-
-```
-make start
-```
-
-Luego puedes abrir los proyectos o cada proyecto en el IDE que prefieras con el directorio **apps**
-
 ## Consideraciones para instalar en prod
 
 Para poder usar traefik es necesario crear una red, para ello ejecutamos el siguiente comando:
@@ -60,12 +42,12 @@ Ejecutar los siguientes comandos:
     
     cp .env.example .env
     cp traefik/acme.json.example traefik/acme.json
-    cp traefik/traefik.log.example traefik/traefik.log
+    cp traefik/logs/traefik.log.example traefik/logs/traefik.log
     cp traefik/shared/.htpasswd.example traefik/shared/.htpasswd
     chmod 0600 traefik/acme.json
 
 Nota: Recuerde usar el modo beta de letsencrypt para la generación de certificados SSL y el contenido de acme.json
-al inico debe de ser {}
+al inicio debe de ser {}
 
 ## Contribuyendo al proyecto
 
