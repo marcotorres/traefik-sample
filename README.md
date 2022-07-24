@@ -22,15 +22,12 @@ La rama por defecto es master
 
 ## Repositorios del proyecto
 
-El proyecto muestra un api de ejemplo y una intranet:
+El proyecto muestra un api de ejemplo y una web:
 
     * api
-    * intranet
+    * web
 
-Los prefijos son de acuerdo al repositorio:
-
-- *api*:  **end_point_github_api** rama master
-- *intranet*:  **end_point_github_intranet**, rama master
+Por ejemplo puedes colgar aquí un api con laravel y un PWA con react o vue.
 
 ## Consideraciones para instalar en prod
 
